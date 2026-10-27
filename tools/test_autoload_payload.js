@@ -89,10 +89,10 @@ async function run(options = {}) {
   assert.deepEqual(ok.events, ['autoload.elf', 'map']);
 
   // Custom named payload passed via payload args.
-  const custom = await run({ args: ['ps5-unified-autoloader-v0.1.5-915a65e.elf'] });
+  const custom = await run({ args: ['ps5-unified-autoloader-v0.1.6-e7093cd.elf'] });
   assert.ifError(custom.error);
   assert.deepEqual(custom.sent, [...custom.bytes]);
-  assert.deepEqual(custom.events, ['ps5-unified-autoloader-v0.1.5-915a65e.elf', 'map']);
+  assert.deepEqual(custom.events, ['ps5-unified-autoloader-v0.1.6-e7093cd.elf', 'map']);
 
   // No kernel access means nothing is sent at all, and nothing is mapped.
   for (const options of [
