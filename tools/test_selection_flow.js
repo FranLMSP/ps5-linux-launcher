@@ -17,7 +17,7 @@ const FW = [
   // fw,      poops, relapse  (as the installer page computes it)
   ['7.00', true, true], ['7.61', true, true], ['8.60', true, true],
   ['9.00', true, true], ['9.05', true, false], ['9.60', true, true],
-  ['10.01', true, true], ['11.00', true, true], ['11.40', true, false],
+  ['10.01', true, true], ['11.00', true, true], ['11.40', true, true],
   ['12.00', true, true], ['12.02', false, true], ['12.70', false, true],
   ['13.00', false, true], ['13.60', false, true],
 ];
@@ -226,7 +226,7 @@ const only = fw => {
     // added is a compile error, and it slipped through once already.
     'static int supported_chains(struct MHD_Connection *conn) {',
     'int poops = fw >= 7 && fw <= 12;',
-    'int relapse = fw >= 7 && fw <= 13.60f && fw != 9.05f && fw != 11.40f;',
+    'int relapse = fw >= 7 && fw <= 13.60f && fw != 9.05f;',
     'int cache_allowed = chains != 0 && (single_chain || (requested & chains) != 0);',
     'if (entry_page && !cache_allowed) {',
   ]) {

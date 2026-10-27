@@ -48,7 +48,7 @@ static int supported_chains(struct MHD_Connection *conn) {
     float fw = ps5 ? strtof(ps5 + 14, NULL) : (fw_arg ? strtof(fw_arg, NULL) : 0);
     if (fw == 0) return 3; /* desktop preview */
     int poops = fw >= 7 && fw <= 12;
-    int relapse = fw >= 7 && fw <= 13.60f && fw != 9.05f && fw != 11.40f;
+    int relapse = fw >= 7 && fw <= 13.60f && fw != 9.05f;
     return poops | (relapse << 1);
 }
 

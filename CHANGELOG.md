@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.6.2] - 2026-10-28
+
+- Updated [ps5-unified-autoloader](https://github.com/itsPLK/ps5-unified-autoloader) to v0.1.6
+  - includes bundled [Payload Manager](https://github.com/itsPLK/ps5-payload-manager) v0.6.3
+- Updated [ps5-elfldr](https://github.com/itsPLK/ps5-elfldr) to v0.27
+- Updated [ps5-webkit-remote-loader](https://github.com/itsPLK/ps5-webkit-remote-loader) to v0.1.2
+  - Added Relapse support for FW 11.40 (credit: [@tidewell](https://github.com/tidewell), [@notmaj0r](https://github.com/notmaj0r))
 ## [v0.6.1] - 2026-10-08
 
 * **9.05, 11.40 & 11.60**: Added missing offsets to fix Poops support.

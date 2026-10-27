@@ -505,7 +505,7 @@
   var match = /PlayStation 5\/(\d+\.\d+)/.exec(navigator.userAgent);
   var fw = match ? parseFloat(match[1]) : 0;
   var hasPoops = fw >= 7 && fw <= 12;
-  var hasRelapse = fw >= 7 && fw <= 13.60 && fw !== 9.05 && fw !== 11.40;
+  var hasRelapse = fw >= 7 && fw <= 13.60 && fw !== 9.05;
 
   var params = new URLSearchParams(location.search);
   var asked = params.get('exploit');
@@ -639,7 +639,7 @@
   if (unsupported) {
     status.textContent = 'Unsupported firmware ' + match[1];
     status.className = 'error';
-    detail.textContent = 'Supported: 7.00–12.00 via Poops, 7.00–13.60 via Relapse (except 9.05 and 11.40).';
+    detail.textContent = 'Supported: 7.00–12.00 via Poops, 7.00–13.60 via Relapse (except 9.05).';
     progress.hidden = true;
     percent.hidden = true;
     fetch('/exit').catch(function () { });
