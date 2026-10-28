@@ -117,7 +117,7 @@ enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
          * server stays up and the page tells the user to re-run the installer. */
         int err = installer_install_app_if_needed();
         if (err == 0) {
-            installer_log("[WKALI] App installed. Stopping server...\n");
+            installer_log("[PS5LL] App installed. Stopping server...\n");
             resp = MHD_create_response_from_buffer(strlen("OK"), (void *)"OK",
                                                    MHD_RESPMEM_PERSISTENT);
             MHD_add_response_header(resp, "Content-Type", "text/plain");
@@ -125,7 +125,7 @@ enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
             atomic_store(&install_completed, 1);
             atomic_store(&http_keep_running, 0);
         } else {
-            installer_log("[WKALI] App install failed (%d). Staying up.\n", err);
+            installer_log("[PS5LL] App install failed (%d). Staying up.\n", err);
             const char *fail = "Install failed";
             resp = MHD_create_response_from_buffer(strlen(fail), (void *)fail,
                                                    MHD_RESPMEM_PERSISTENT);
@@ -133,7 +133,7 @@ enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
             http_status = MHD_HTTP_INTERNAL_SERVER_ERROR;
         }
     } else if (strcmp(url, ROUTE_EXIT) == 0) {
-        installer_log("[WKALI] Exit requested by client. Stopping server...\n");
+        installer_log("[PS5LL] Exit requested by client. Stopping server...\n");
         resp = MHD_create_response_from_buffer(2, (void *)"OK",
                                                MHD_RESPMEM_PERSISTENT);
         MHD_add_response_header(resp, "Content-Type", "text/plain");
@@ -172,7 +172,7 @@ enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
     } else if (strcmp(url, ROUTE_CLEAR_WEBKIT_DATA) == 0) {
         int err = installer_clear_webkit_data();
         if (err == 0) {
-            installer_log("[WKALI] WebKit data cleared successfully. Will re-launch browser.\n");
+            installer_log("[PS5LL] WebKit data cleared successfully. Will re-launch browser.\n");
             simulate_on_clear_success();
             resp = MHD_create_response_from_buffer(2, (void *)"OK",
                                                    MHD_RESPMEM_PERSISTENT);
@@ -180,7 +180,7 @@ enum MHD_Result http_on_request(void *cls, struct MHD_Connection *conn,
             http_status = MHD_HTTP_OK;
             atomic_store(&webkit_data_cleared, 1);
         } else {
-            installer_log("[WKALI] WebKit data clear failed.\n");
+            installer_log("[PS5LL] WebKit data clear failed.\n");
             const char *fail = "Clear failed";
             resp = MHD_create_response_from_buffer(strlen(fail), (void *)fail,
                                                    MHD_RESPMEM_PERSISTENT);

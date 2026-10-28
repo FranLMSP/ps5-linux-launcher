@@ -138,7 +138,7 @@ def main(argv=None):
         return 0
     if argv and argv[0] == "--title":
         info = get_version_info()
-        print(f"WebKit Autoloader v{info['full']} by PLK (built {info['build_time']})")
+        print(f"PS5 Linux Launcher v{info['full']} by PLK (built {info['build_time']})")
         return 0
 
     if len(argv) == 2 and argv[0] == "--page-config":

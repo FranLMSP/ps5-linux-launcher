@@ -59,7 +59,7 @@ jobs:
           fi
           echo "Release $TAG does not exist. Proceeding."
 
-      - name: Build WebKit Autoloader Installer & Host Script
+      - name: Build PS5 Linux Launcher Installer & Host Script
         run: |
           chmod +x build_release.sh
           ./build_release.sh

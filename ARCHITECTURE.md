@@ -1,4 +1,4 @@
-# WebKit Autoloader architecture
+# PS5 Linux Launcher architecture
 
 This repository installs an offline homescreen app and bundles a standalone HTML
 page built by `third_party/ps5-webkit-remote-loader`. Remote-loader owns WebKit,

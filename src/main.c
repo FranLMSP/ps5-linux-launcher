@@ -1,5 +1,5 @@
 /*
- * WebKit Autoloader Installer - Main Entry Point
+ * PS5 Linux Launcher Installer - Main Entry Point
  *
  * This is a native PS5 ELF that starts a temporary HTTP server, opens the
  * browser to cache a page (or set of pages), installs the homescreen shortcut
@@ -32,17 +32,17 @@ static pid_t find_pid(const char *name) {
     uint8_t *buf;
 
     if (sysctl(mib, 4, 0, &buf_size, 0, 0)) {
-        installer_log("[WKALI] sysctl failed\n");
+        installer_log("[PS5LL] sysctl failed\n");
         return -1;
     }
 
     if (!(buf = malloc(buf_size))) {
-        installer_log("[WKALI] malloc failed\n");
+        installer_log("[PS5LL] malloc failed\n");
         return -1;
     }
 
     if (sysctl(mib, 4, buf, &buf_size, 0, 0)) {
-        installer_log("[WKALI] sysctl failed\n");
+        installer_log("[PS5LL] sysctl failed\n");
         free(buf);
         return -1;
     }
@@ -83,28 +83,28 @@ int main(void) {
     /* Kill previous installer instances */
     while ((pid = find_pid(WKALI_THREAD_NAME)) > 0) {
         if (kill(pid, SIGKILL)) {
-            installer_log("[WKALI] kill failed\n");
+            installer_log("[PS5LL] kill failed\n");
             return EXIT_FAILURE;
         }
         sleep(1);
     }
 
-    installer_log("[WKALI] WebKit Autoloader Installer v%s by PLK (built %s) starting on port %d...\n",
+    installer_log("[PS5LL] PS5 Linux Launcher Installer v%s by PLK (built %s) starting on port %d...\n",
                    WKAL_FULL_VERSION, WKAL_BUILD_TIME, WKALI_PORT);
 
     /* Initialize PS5 System Services */
     int err;
     if ((err = sceNetCtlInit()) == 0) {
-        installer_log("[WKALI] Network Controller initialized.\n");
+        installer_log("[PS5LL] Network Controller initialized.\n");
     } else {
-        installer_log("[WKALI] sceNetCtlInit failed: 0x%08X\n", err);
+        installer_log("[PS5LL] sceNetCtlInit failed: 0x%08X\n", err);
     }
 
     int user_prio = 256;
     if ((err = sceUserServiceInitialize(&user_prio)) == 0) {
-        installer_log("[WKALI] User Service initialized.\n");
+        installer_log("[PS5LL] User Service initialized.\n");
     } else {
-        installer_log("[WKALI] sceUserServiceInitialize failed: 0x%08X\n", err);
+        installer_log("[PS5LL] sceUserServiceInitialize failed: 0x%08X\n", err);
     }
 
     /* The homescreen app is installed/updated only AFTER the browser has
@@ -122,12 +122,12 @@ int main(void) {
                               MHD_OPTION_END);
 
     if (NULL == daemon) {
-        installer_log("[WKALI] Failed to start HTTP daemon!\n");
-        installer_notify("WebKit Autoloader Installer: Error\nHTTP server failed to start");
+        installer_log("[PS5LL] Failed to start HTTP daemon!\n");
+        installer_notify("PS5 Linux Launcher Installer: Error\nHTTP server failed to start");
         return 1;
     }
 
-    installer_log("[WKALI] Server running. Waiting for the browser to cache content...\n");
+    installer_log("[PS5LL] Server running. Waiting for the browser to cache content...\n");
 
     /* Query foreground user ID to pass to the frontend URL so the UI can
      * display the exact /user/home/<userid>/webkit/shell/ path in prompts. */
@@ -157,7 +157,7 @@ int main(void) {
             if (webkit_clear_attempts <= 1) {
                 /* Give the HTTP response time to flush before re-launching */
                 usleep(500000);
-                installer_log("[WKALI] Re-launching browser after WebKit data clear (attempt %d)...\n",
+                installer_log("[PS5LL] Re-launching browser after WebKit data clear (attempt %d)...\n",
                           webkit_clear_attempts);
                 char retry_url[256];
                 snprintf(retry_url, sizeof(retry_url),
@@ -165,7 +165,7 @@ int main(void) {
                          WKALI_PORT, WKAL_FULL_VERSION, uid_param);
                 ps5_launch_browser(retry_url);
             } else {
-                installer_log("[WKALI] WebKit clear already attempted %d time(s), not re-launching.\n",
+                installer_log("[PS5LL] WebKit clear already attempted %d time(s), not re-launching.\n",
                           webkit_clear_attempts);
             }
         }
@@ -173,7 +173,7 @@ int main(void) {
     }
 
     if (atomic_load(&install_completed)) {
-        installer_notify("WebKit Autoloader v%s cached successfully!", WKAL_FULL_VERSION);
+        installer_notify("PS5 Linux Launcher v%s cached successfully!", WKAL_FULL_VERSION);
     }
     installer_log_wakeup();
 

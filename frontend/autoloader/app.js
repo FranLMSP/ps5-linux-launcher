@@ -24,11 +24,11 @@
   var label = element('div', 'progressLabel', progress);
   var config = window.WKAL_PAGE || {};
   if (config.version) {
-    document.title = 'WebKit Autoloader v' + config.version + ' by PLK' +
+    document.title = 'PS5 Linux Launcher v' + config.version + ' by PLK' +
       (config.buildTime ? ' (built ' + config.buildTime + ')' : '');
   }
   var footer = element('div', 'footer', document.body);
-  element('div', 'buildInfo', footer, 'WebKit Autoloader' +
+  element('div', 'buildInfo', footer, 'PS5 Linux Launcher' +
     (config.version ? ' v' + config.version : '') + ' by PLK' +
     (config.buildTime ? ' (built ' + config.buildTime + ')' : ''));
   var source = element('div', 'sourceInfo', footer, 'This project is free and open source: ');

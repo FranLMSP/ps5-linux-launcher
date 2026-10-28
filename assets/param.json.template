@@ -1,11 +1,11 @@
 {
-    "titleId": "WKAL00001",
+    "titleId": "PS5L00001",
     "applicationCategoryType": 65536,
     "deeplinkUri": "http://127.0.0.1:18181/app/index.html",
     "localizedParameters": {
         "defaultLanguage": "en-US",
         "en-US": {
-            "titleName": "WebKit Autoloader v[[VERSION_PLACEHOLDER]]"
+            "titleName": "PS5 Linux Launcher v[[VERSION_PLACEHOLDER]]"
         }
     }
 }

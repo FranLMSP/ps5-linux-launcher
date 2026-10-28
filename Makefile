@@ -12,7 +12,7 @@ LDFLAGS := -Wl,--gc-sections
 LIBS := $(TARGET)/lib/libmicrohttpd.a -L$(TARGET)/lib -lpthread \
         -lSceNetCtl -lSceUserService -lSceSystemService -lSceAppInstUtil
 SRCS := src/main.c src/http_server.c $(INSTALLER_COMMON_SRCS)
-ELF := installer.elf
+ELF := ps5-linux-launcher-installer.elf
 
 # One version per make invocation, including dirty-tree builds.
 ifndef BUILD_VERSION
@@ -48,8 +48,8 @@ ICONS := assets/icon0.png assets/icon.ico
 INSTALLER_LOGO := frontend/installer-page/logo.svg
 HOST_PAYLOAD ?= $(ELF)
 PAYLOAD_TAG ?= $(shell git -C third_party/ps5-unified-autoloader describe --tags --always 2>/dev/null || echo v0.1.6-e7093cd)
-AUTOLOAD_PAYLOAD_VIRTUAL ?= ps5-unified-autoloader-$(PAYLOAD_TAG).elf
-HOST_PAYLOAD_VIRTUAL ?= $(if $(filter-out installer.elf,$(notdir $(HOST_PAYLOAD))),$(notdir $(HOST_PAYLOAD)),webkit-autoloader-installer_v$(BUILD_VERSION).elf)
+AUTOLOAD_PAYLOAD_VIRTUAL ?= ps5-linux-loader.elf
+HOST_PAYLOAD_VIRTUAL ?= $(if $(filter-out ps5-linux-launcher-installer.elf,$(notdir $(HOST_PAYLOAD))),$(notdir $(HOST_PAYLOAD)),ps5-linux-launcher-installer_v$(BUILD_VERSION).elf)
 
 # Optional cache-repair hardware test builds; use make clean all when changing.
 SIMULATE ?= 0
@@ -90,7 +90,8 @@ payload-deps:
 # One page per chain: ELF loader check first, then exploit and autoload. Both
 # are cached, so the choice of chain never has to invalidate anything.
 page: payload-deps
-	@mkdir -p build/autoloader
+	@mkdir -p build/autoloader build/deps
+	[ -f build/deps/autoload.elf ] || cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
 	@for chain in $(CHAINS); do \
 	    echo "$(BUILDER) payloads/$$chain.js -> build/autoloader/$$chain.html"; \
@@ -122,25 +123,26 @@ HOST_RELAPSE := build/host/relapse.html
 HOST_POOPS := build/host/poops.html
 
 host: $(HOST_PAYLOAD) payload-deps assets/icon.ico
-	@mkdir -p build/host
+	@mkdir -p build/host build/deps
+	[ -f build/deps/autoload.elf ] || cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
-	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/relapse.js $(CURDIR)/payloads/autoload.js::$(HOST_PAYLOAD_VIRTUAL) \
+	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/relapse.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
 	    --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
-	    --embed $(HOST_PAYLOAD_VIRTUAL)=$(HOST_PAYLOAD) -o $(CURDIR)/$(HOST_RELAPSE)
-	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/poops.js $(CURDIR)/payloads/autoload.js::$(HOST_PAYLOAD_VIRTUAL) \
+	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf -o $(CURDIR)/$(HOST_RELAPSE)
+	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/poops.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
 	    --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
-	    --embed $(HOST_PAYLOAD_VIRTUAL)=$(HOST_PAYLOAD) -o $(CURDIR)/$(HOST_POOPS)
+	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf -o $(CURDIR)/$(HOST_POOPS)
 	$(PYTHON) $(LOADER)/tools/build_host.py \
 	    --page index.html=$(HOST_RELAPSE) \
 	    --page poops.html=$(HOST_POOPS) \
-	    --version $(BUILD_VERSION) --name "PS5 WEBKIT AUTOLOADER" --output webkit-autoloader-host.py
+	    --version $(BUILD_VERSION) --name "PS5 LINUX LAUNCHER" --output ps5-linux-launcher-host.py
 
 dev: page
 	$(PYTHON) -m http.server 8123 --bind 127.0.0.1 --directory build/autoloader
 
 clean:
 	rm -rf $(STAGE) build/autoloader build/host
-	rm -f $(ELF) $(REGISTRY) include/wkali_version.h webkit-autoloader-host.py
+	rm -f $(ELF) $(REGISTRY) include/wkali_version.h ps5-linux-launcher-host.py
 	rm -f $(PAGE_CONFIG)
 
 .PHONY: all version print-version test test-native icons payload-deps page registry host dev clean
