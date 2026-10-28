@@ -10,7 +10,7 @@
 #define WKALI_PORT 18181
 
 /* Title ID of the installed homescreen app ("PS5 Linux Launcher") */
-#define WKAL_TITLE_ID "PS5L00001"
+#define WKAL_TITLE_ID "WKAL00002"
 
 /* Process identity */
 #define WKALI_THREAD_NAME "ps5ll.elf"

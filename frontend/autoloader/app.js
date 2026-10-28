@@ -28,12 +28,12 @@
       (config.buildTime ? ' (built ' + config.buildTime + ')' : '');
   }
   var footer = element('div', 'footer', document.body);
-  element('div', 'buildInfo', footer, 'PS5 Linux Launcher' +
-    (config.version ? ' v' + config.version : '') + ' by PLK' +
+  element('div', 'buildInfo', footer, 'PS5 Linux Launcher (based on webkit autoloader by PLK)' +
+    (config.version ? ' v' + config.version : '') +
     (config.buildTime ? ' (built ' + config.buildTime + ')' : ''));
   var source = element('div', 'sourceInfo', footer, 'This project is free and open source: ');
-  var link = element('a', 'sourceLink', source, 'github.com/itsPLK/ps5-webkit-autoloader');
-  link.href = 'https://github.com/itsPLK/ps5-webkit-autoloader';
+  var link = element('a', 'sourceLink', source, 'github.com/FranLMSP/ps5-linux-launcher');
+  link.href = 'https://github.com/FranLMSP/ps5-linux-launcher';
 
   var percent = 0;
   var finished = false;

@@ -91,7 +91,7 @@ payload-deps:
 # are cached, so the choice of chain never has to invalidate anything.
 page: payload-deps
 	@mkdir -p build/autoloader build/deps
-	[ -f build/deps/autoload.elf ] || cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
+	cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
 	@for chain in $(CHAINS); do \
 	    echo "$(BUILDER) payloads/$$chain.js -> build/autoloader/$$chain.html"; \
@@ -124,7 +124,7 @@ HOST_POOPS := build/host/poops.html
 
 host: $(HOST_PAYLOAD) payload-deps assets/icon.ico
 	@mkdir -p build/host build/deps
-	[ -f build/deps/autoload.elf ] || cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
+	cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
 	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/relapse.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
 	    --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
