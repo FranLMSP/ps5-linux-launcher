@@ -1,5 +1,7 @@
+> **Disclaimer:** This is a personal fork made for my own use. I do not intend to actively maintain or provide support for this project. Use at your own risk.
+
 <p align="center">
- <img src="./assets/icon.svg" width="128" />
+ <img src="./logo.webp" width="128" />
 </p>
 <h1 align="center">PS5 Linux Launcher</h1>
 &nbsp;
