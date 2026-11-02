@@ -15,7 +15,7 @@ PS5 Linux Launcher is a fork/customization of [ps5-webkit-autoloader](https://gi
 2. Instead of letting you choose arbitrary payloads, it automatically loads `ps5-linux-loader.elf` (from this fork) to boot Linux.
 3. Everything is served offline from the console after a one-time install (no third-party DNS required).
 
-> Note: The bundled `ps5-linux-loader.elf` in this repo is known to be compatible with **12.60** (the console it was tested on). Other firmwares may need a loader built for them.
+> Note: the embedded `ps5-linux-loader.elf` is firmware-specific. The generic build and the `_11.40` build bundle the all-11/13 loader (3.xx–11.60 and 13.xx, but **not** 12.xx); the `_12.60` build bundles the 12.xx loader (12.00–12.70 and 13.60). Both contain the same launcher, exploit pages and autoloader; only the loader differs. For another firmware, rebuild after placing a matching `ps5-linux-loader.elf` in the repo root.
 
 ## Setup Instructions
 
