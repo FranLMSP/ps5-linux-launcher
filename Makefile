@@ -49,6 +49,16 @@ INSTALLER_LOGO := frontend/installer-page/logo.svg
 HOST_PAYLOAD ?= $(ELF)
 PAYLOAD_TAG ?= $(shell git -C third_party/ps5-unified-autoloader describe --tags --always 2>/dev/null || echo v0.1.6-e7093cd)
 AUTOLOAD_PAYLOAD_VIRTUAL ?= ps5-linux-loader.elf
+AUTOLOAD_PAYLOAD_12XX ?= ps5-linux-loader.12xx.elf
+AUTOLOAD_PAYLOAD_12XX_VIRTUAL ?= ps5-linux-loader-12xx.elf
+# When the 12.xx loader is next to the default one, embed both. The loader-aware
+# payloads receive both resource names and pick one from api.fw at runtime.
+AUTOLOAD_ARGS := $(AUTOLOAD_PAYLOAD_VIRTUAL)
+AUTOLOAD_12XX_EMBED :=
+ifneq ($(wildcard $(AUTOLOAD_PAYLOAD_12XX)),)
+AUTOLOAD_ARGS := $(AUTOLOAD_PAYLOAD_VIRTUAL),$(AUTOLOAD_PAYLOAD_12XX_VIRTUAL)
+AUTOLOAD_12XX_EMBED := --embed $(AUTOLOAD_PAYLOAD_12XX_VIRTUAL)=$(AUTOLOAD_PAYLOAD_12XX)
+endif
 HOST_PAYLOAD_VIRTUAL ?= $(if $(filter-out ps5-linux-launcher-installer.elf,$(notdir $(HOST_PAYLOAD))),$(notdir $(HOST_PAYLOAD)),ps5-linux-launcher-installer_v$(BUILD_VERSION).elf)
 
 # Optional cache-repair hardware test builds; use make clean all when changing.
@@ -95,9 +105,9 @@ page: payload-deps
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
 	@for chain in $(CHAINS); do \
 	    echo "$(BUILDER) payloads/$$chain.js -> build/autoloader/$$chain.html"; \
-	    $(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) payloads/$$chain.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
+	    $(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_ARGS) payloads/$$chain.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_ARGS) \
 	        --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
-	        --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf \
+	        --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf $(AUTOLOAD_12XX_EMBED) \
 	        -o $(CURDIR)/build/autoloader/$$chain.html || exit 1; \
 	done
 
@@ -126,12 +136,12 @@ host: $(HOST_PAYLOAD) payload-deps assets/icon.ico
 	@mkdir -p build/host build/deps
 	cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
-	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) payloads/relapse.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
+	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_ARGS) payloads/relapse.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_ARGS) \
 	    --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
-	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf -o $(CURDIR)/$(HOST_RELAPSE)
-	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) payloads/poops.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
+	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf $(AUTOLOAD_12XX_EMBED) -o $(CURDIR)/$(HOST_RELAPSE)
+	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_ARGS) payloads/poops.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_ARGS) \
 	    --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
-	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf -o $(CURDIR)/$(HOST_POOPS)
+	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf $(AUTOLOAD_12XX_EMBED) -o $(CURDIR)/$(HOST_POOPS)
 	$(PYTHON) $(LOADER)/tools/build_host.py \
 	    --page index.html=$(HOST_RELAPSE) \
 	    --page poops.html=$(HOST_POOPS) \

@@ -16,16 +16,19 @@ page carries three ordinary payloads. The loader first prepares the WebKit memor
 primitive and ROP worker, then runs this queue:
 
 1. `elfldr-check.js` connects to `127.0.0.1:9021`. If a loader accepts the
-   connection, the console is already jailbroken: it stages the bundled
-   `ps5-linux-loader.elf` into an anonymous mapping, streams it over that same
-   socket, and requests `api.stopQueue()`, skipping the exploit and autoload. A
-   refused connection allows the queue to proceed; an unexpected probe, hand-off
-   or cleanup error stops it instead of retrying a kernel exploit blindly. No
-   kernel access is required for this path.
+   connection, the console is already jailbroken: it stages the firmware-matched
+   Linux loader into an anonymous mapping, streams it over that same socket, and
+   requests `api.stopQueue()`, skipping the exploit and autoload. A refused
+   connection allows the queue to proceed; an unexpected probe, hand-off or cleanup
+   error stops it instead of retrying a kernel exploit blindly. No kernel access is
+   required for this path. A combined page embeds both loader builds; the payload
+   picks `ps5-linux-loader-12xx.elf` when `api.fw` starts with `12.`, and the
+   all-11/13 `ps5-linux-loader.elf` otherwise (with the other as a fallback).
 2. `poops.js` (or `relapse.js`) runs unmodified from the submodule. It establishes
    kernel access and brings up elfldr/kexp itself on port 9021.
-3. `autoload.js` then stages the bundled ELF into an anonymous mapping and streams
-   it to elfldr. It selects nothing: the page is already built for one chain.
+3. `autoload.js` then stages the same firmware-matched ELF into an anonymous
+   mapping and streams it to elfldr. It selects nothing else: the page is already
+   built for one chain.
 
 The payload queue runs in order: `[1/3] elfldr-check.js`, `[2/3] poops.js`
 (or `relapse.js`), then `[3/3] autoload.js`. Each payload runs directly in the page
@@ -78,11 +81,12 @@ network interface, but no Internet access.
 `Makefile` calls the upstream builders without transforming their output:
 
 - `make page`: verify/download dependencies, then call `tools/build_standalone.py`
-  once per chain with `payloads/elfldr-check.js::<payload_elf>`, that chain's
-  exploit, then `payloads/autoload.js::<payload_elf>`, plus
-  `--elfldr` and `--embed <payload_elf>=<file>`. Both loader-aware payloads are
-  told the embedded resource name, so a renamed `AUTOLOAD_PAYLOAD_VIRTUAL` works.
-  Outputs: `build/autoloader/{poops,relapse}.html`.
+  once per chain with `payloads/elfldr-check.js::<loader_args>`, that chain's
+  exploit, then `payloads/autoload.js::<loader_args>`, plus
+  `--elfldr` and one `--embed` per loader. When `ps5-linux-loader.12xx.elf` is
+  present, `<loader_args>` names both the default and 12.xx resources and both are
+  embedded; otherwise it names one. A renamed `AUTOLOAD_PAYLOAD_VIRTUAL` still
+  works. Outputs: `build/autoloader/{poops,relapse}.html`.
   The exploits are submodule paths, resolved relative to the submodule root.
 - `make all`: stage the installer page, stable pointer and generated HTML; generate
   a compressed C registry and AppCache manifest; compile `installer.elf` with the
@@ -190,10 +194,11 @@ raw DEFLATE. Native ELF compilation still uses the PS5 SDK.
 real check payload through the upstream queue, verifying that an accepted socket
 receives the whole ELF directly, that refused sockets continue, that descriptor
 and mapping cleanup happens, and that hand-off errors stop the queue. It also
-checks the skipped exploit/autoload and custom payload names.
+checks the skipped exploit/autoload, custom payload names, and 11.xx/12.xx/13.xx
+loader selection with the 12.xx-to-default fallback.
 `tools/test_autoload_payload.js` covers the third payload: ELF staging into the
-mapping, the hand-off to elfldr, short socket writes, the missing-`krw` refusal
-and cleanup on failure.
+mapping, the hand-off to elfldr, short socket writes, the missing-`krw` refusal,
+cleanup on failure, and the same firmware-aware loader selection.
 `tools/test_installer.js` checks the installer's cache events, the marker gate,
 choice gating in both orders, error handling, repair confirmation and the pointer.
 `tools/test_selection_flow.js` checks that a pick is stored on the origin and that

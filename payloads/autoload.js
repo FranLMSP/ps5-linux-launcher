@@ -6,9 +6,24 @@
 // served from the page itself and still works after the exploit has taken the
 // process over.
 const NR = { SOCKET: 0x61, CONNECT: 0x62, WRITE: 4, CLOSE: 6, MMAP: 0x1dd, MUNMAP: 0x49 };
+const DEFAULT_ELF = "ps5-linux-loader.elf";
+const FW12_ELF = "ps5-linux-loader-12xx.elf";
 
 function failed(value) {
   return (value.low | 0) === -1;
+}
+
+// A combined page embeds two loaders. The 12.xx loader has the 12.xx offset
+// tables; the all-11/13 loader deliberately does not. Payload args carry the
+// two resource names (default, 12.xx); a single arg remains a manual override.
+function loaderCandidates(api) {
+  const args = api && Array.isArray(api.args) ? api.args : [];
+  const isTwelve = /^12\./.test(String((api && api.fw) || ""));
+  let names;
+  if (args.length >= 2) names = isTwelve ? [args[1], args[0]] : [args[0]];
+  else if (args.length === 1) names = [args[0], DEFAULT_ELF];
+  else names = isTwelve ? [FW12_ELF, DEFAULT_ELF] : [DEFAULT_ELF];
+  return names.filter((name, index, all) => name && all.indexOf(name) === index);
 }
 
 async function connect(api) {
@@ -31,9 +46,7 @@ async function connect(api) {
 }
 
 async function loadElf(api) {
-  const requested = (api && Array.isArray(api.args) && api.args[0]) || "ps5-linux-loader.elf";
-  const candidates = [requested, "ps5-linux-loader.elf"].filter(
-    (name, index, all) => name && all.indexOf(name) === index);
+  const candidates = loaderCandidates(api);
   let elfName = null;
   let response = null;
   for (let i = 0; i < candidates.length; i++) {
@@ -42,7 +55,7 @@ async function loadElf(api) {
       if (r.ok) { response = r; elfName = candidates[i]; break; }
     } catch (e) {}
   }
-  if (!response || !elfName) throw new Error("Could not load " + requested + ".");
+  if (!response || !elfName) throw new Error("Could not load " + candidates.join(" or ") + ".");
   const bytes = await response.arrayBuffer();
   const view = new DataView(bytes);
   if (bytes.byteLength < 0x1000 || view.getUint32(0, true) !== 0x464c457f)

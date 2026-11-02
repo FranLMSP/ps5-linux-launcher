@@ -15,7 +15,7 @@ PS5 Linux Launcher is a fork/customization of [ps5-webkit-autoloader](https://gi
 2. Instead of letting you choose arbitrary payloads, it automatically loads `ps5-linux-loader.elf` (from this fork) to boot Linux.
 3. Everything is served offline from the console after a one-time install (no third-party DNS required).
 
-> Note: the embedded `ps5-linux-loader.elf` is firmware-specific. The generic build and the `_11.40` build bundle the all-11/13 loader (3.xx–11.60 and 13.xx, but **not** 12.xx); the `_12.60` build bundles the 12.xx loader (12.00–12.70 and 13.60). Both contain the same launcher, exploit pages and autoloader; only the loader differs. For another firmware, rebuild after placing a matching `ps5-linux-loader.elf` in the repo root.
+> Note: the launcher can carry both loader builds. `ps5-linux-launcher-installer_11.40-12.60.elf` (and any build made while both `ps5-linux-loader.elf` and `ps5-linux-loader.12xx.elf` are present) embeds both and chooses at runtime from the console firmware: 12.xx uses the 12.xx loader, everything else uses the all-11/13 loader. The single-loader `_11.40` (all-11/13) and `_12.60` (12.xx) artifacts are also kept. For another firmware, rebuild after placing a matching `ps5-linux-loader.elf` in the repo root.
 
 ## Setup Instructions
 
@@ -65,7 +65,7 @@ make host
 ./build_release.sh
 ```
 
-The autoloader will embed `ps5-linux-loader.elf` from `./ps5-linux-loader.elf` or `build/deps/autoload.elf`. Place your desired loader there before building.
+The autoloader embeds `ps5-linux-loader.elf` from `./ps5-linux-loader.elf` or `build/deps/autoload.elf`. Place your desired loader there before building. If `ps5-linux-loader.12xx.elf` is present as well, the same build embeds both and the payloads choose one from `api.fw` at runtime; remove it (or override `AUTOLOAD_PAYLOAD_12XX`) for a single-loader build.
 
 ## Credits
 

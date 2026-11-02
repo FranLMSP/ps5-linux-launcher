@@ -7,14 +7,27 @@
 // The runner has prepared WebKit/ROP, so all of this works without kernel
 // access: socket/connect/write, plus an anonymous mapping for the ELF bytes.
 const NR = { SOCKET: 0x61, CONNECT: 0x62, WRITE: 4, CLOSE: 6, MMAP: 0x1dd, MUNMAP: 0x49 };
+const DEFAULT_ELF = 'ps5-linux-loader.elf';
+const FW12_ELF = 'ps5-linux-loader-12xx.elf';
 
 function failed(value) {
   return (value.low | 0) === -1;
 }
 
-async function stageElf(api, expectedName) {
-  const candidates = [expectedName, 'ps5-linux-loader.elf'].filter(
-    (name, index, all) => name && all.indexOf(name) === index);
+// A combined page embeds two loaders. The 12.xx loader is a different build:
+// the all-11/13 one deliberately has no 12.xx tables. Payload args carry the
+// resource names (default, 12.xx); a single arg remains a manual override.
+function loaderCandidates(api) {
+  const args = api && Array.isArray(api.args) ? api.args : [];
+  const isTwelve = /^12\./.test(String((api && api.fw) || ''));
+  let names;
+  if (args.length >= 2) names = isTwelve ? [args[1], args[0]] : [args[0]];
+  else if (args.length === 1) names = [args[0], DEFAULT_ELF];
+  else names = isTwelve ? [FW12_ELF, DEFAULT_ELF] : [DEFAULT_ELF];
+  return names.filter((name, index, all) => name && all.indexOf(name) === index);
+}
+
+async function stageElf(api, candidates) {
   let elfName = null;
   let response = null;
   for (let i = 0; i < candidates.length; i++) {
@@ -23,7 +36,7 @@ async function stageElf(api, expectedName) {
       if (r.ok) { response = r; elfName = candidates[i]; break; }
     } catch (e) {}
   }
-  if (!response || !elfName) throw new Error('Could not load ' + expectedName + '.');
+  if (!response || !elfName) throw new Error('Could not load ' + candidates.join(' or ') + '.');
 
   const bytes = await response.arrayBuffer();
   const view = new DataView(bytes);
@@ -69,11 +82,13 @@ return async function (api) {
     }
 
     handoff = true;
-    const name = (api.args && api.args[0]) || 'ps5-linux-loader.elf';
-    await api.log('ELF loader already running; sending ' + name +
+    const candidates = loaderCandidates(api);
+    const name = candidates[0];
+    await api.log('ELF loader already running; sending ' + name + ' for FW ' +
+      ((api && api.fw) || 'unknown') +
       ' directly and skipping the exploit.', 'info');
 
-    elf = await stageElf(api, name);
+    elf = await stageElf(api, candidates);
     let sent = 0;
     while (sent < elf.size) {
       const want = Math.min(0x10000, elf.size - sent);

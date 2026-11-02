@@ -25,12 +25,23 @@ async function run(options = {}) {
   let connections = 0;
   let closed = 0;
   let unmapped = 0;
-  const expectedElf = (options.args && options.args[0]) || 'ps5-linux-loader.elf';
+  const fw = options.fw || '11.00';
+  const args = options.args || [];
+  const isTwelve = /^12\./.test(fw);
+  const defaultElf = 'ps5-linux-loader.elf';
+  const fw12Elf = 'ps5-linux-loader-12xx.elf';
+  const allowed = (args.length >= 2
+    ? (isTwelve ? [args[1], args[0]] : [args[0]])
+    : args.length === 1
+      ? [args[0], defaultElf]
+      : (isTwelve ? [fw12Elf, defaultElf] : [defaultElf]))
+    .filter((name, index, all) => name && all.indexOf(name) === index);
   const api = {
     // Payload 3: the exploit already ran, so krw is present unless we are
     // testing the case where it did not.
     krw: options.noKrw ? null : {},
-    args: options.args || [],
+    args,
+    fw,
     log: async () => {},
     p: {
       malloc(size) { const p = pointer(next); next += size; return p; },
@@ -64,9 +75,9 @@ async function run(options = {}) {
     setTimeout(fn) { fn(); },
     fetch: async (path) => {
       events.push(path);
-      assert.equal(path, expectedElf, 'only the embedded ELF is fetched');
+      assert(allowed.includes(path), 'fetched an unexpected ELF: ' + path);
       return {
-        ok: !options.fetchFails,
+        ok: !options.fetchFails && !(options.missing || []).includes(path),
         arrayBuffer: async () => options.badElf ? new ArrayBuffer(8) : bytes.buffer,
       };
     },
@@ -93,6 +104,32 @@ async function run(options = {}) {
   assert.ifError(custom.error);
   assert.deepEqual(custom.sent, [...custom.bytes]);
   assert.deepEqual(custom.events, ['ps5-unified-autoloader-v0.1.6-e7093cd.elf', 'map']);
+
+  // A combined page embeds both loaders; 12.xx selects the dedicated one.
+  const fw12 = await run({ fw: '12.60' });
+  assert.ifError(fw12.error);
+  assert.deepEqual(fw12.events, ['ps5-linux-loader-12xx.elf', 'map']);
+  assert.deepEqual(fw12.sent, [...fw12.bytes]);
+
+  // Explicit two-arg names (the Makefile's combined build) select the 12.xx
+  // resource on 12.xx and the default one elsewhere.
+  const combined = await run({ fw: '12.60', args: ['all.elf', 'twelve.elf'] });
+  assert.ifError(combined.error);
+  assert.deepEqual(combined.events, ['twelve.elf', 'map']);
+  const all11 = await run({ fw: '11.40', args: ['all.elf', 'twelve.elf'] });
+  assert.ifError(all11.error);
+  assert.deepEqual(all11.events, ['all.elf', 'map']);
+  const fw13 = await run({ fw: '13.60' });
+  assert.ifError(fw13.error);
+  assert.deepEqual(fw13.events, ['ps5-linux-loader.elf', 'map']);
+
+  // A combined page without the 12.xx resource falls back to the default
+  // loader instead of leaving the user with an empty autoload.
+  const fallback = await run({ fw: '12.60', missing: ['ps5-linux-loader-12xx.elf'] });
+  assert.ifError(fallback.error);
+  assert.deepEqual(fallback.events,
+    ['ps5-linux-loader-12xx.elf', 'ps5-linux-loader.elf', 'map']);
+  assert.deepEqual(fallback.sent, [...fallback.bytes]);
 
   // No kernel access means nothing is sent at all, and nothing is mapped.
   for (const options of [

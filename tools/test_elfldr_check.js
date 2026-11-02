@@ -27,16 +27,27 @@ function makeElf(size = 0x1007) {
     const fd = options.fd ?? 12;
     const mapped = 0x30000000;
     let next = 0x20000000, unmapped = 0, closed = 0;
-    const expectedElf = (options.args && options.args[0]) || 'ps5-linux-loader.elf';
+    const fw = options.fw || '11.00';
+    const args = options.args || [];
+    const isTwelve = /^12\./.test(fw);
+    const defaultElf = 'ps5-linux-loader.elf';
+    const fw12Elf = 'ps5-linux-loader-12xx.elf';
+    const allowed = (args.length >= 2
+      ? (isTwelve ? [args[1], args[0]] : [args[0]])
+      : args.length === 1
+        ? [args[0], defaultElf]
+        : (isTwelve ? [fw12Elf, defaultElf] : [defaultElf]))
+      .filter((name, index, all) => name && all.indexOf(name) === index);
 
     globalThis.window = globalThis;
-    globalThis.fw_str = '11.00';
+    globalThis.fw_str = fw;
     globalThis.writeLog = (message, type) => logs.push({ message, type });
     globalThis.fetch = async (name) => {
       fetched.push(name);
       if (options.fetchThrows) throw new Error('fetch failed unexpectedly');
       return {
-        ok: !options.fetchFails && name === expectedElf,
+        ok: !options.fetchFails && allowed.includes(name) &&
+          !(options.missing || []).includes(name),
         arrayBuffer: async () => options.badElf ? new ArrayBuffer(8) : elfBytes.buffer,
       };
     };
@@ -100,7 +111,10 @@ function makeElf(size = 0x1007) {
   // are skipped and no kernel access is needed. Descriptor 0 must also work.
   for (const options of [{ listening: true, fd: 0 }, { listening: true, fd: 12 },
     { listening: true, args: ['ps5-linux-loader.elf'] },
-    { listening: true, args: ['custom-loader.elf'] }]) {
+    { listening: true, args: ['custom-loader.elf'] },
+    { listening: true, fw: '12.60' },
+    { listening: true, fw: '12.60', args: ['all.elf', 'twelve.elf'] },
+    { listening: true, fw: '13.60' }]) {
     const result = await run(options);
     assert.equal(result.summary.stopped, true, JSON.stringify(options));
     assert.equal(result.summary.run, 1);
@@ -112,10 +126,23 @@ function makeElf(size = 0x1007) {
     assert.deepEqual(result.written, [...result.elfBytes]);
     assert.equal(result.unmapped, 1);
     assert.equal(result.closed, 1);
-    assert.deepEqual(result.fetched,
-      [(options.args && options.args[0]) || 'ps5-linux-loader.elf']);
+    const expected = options.args && options.args.length >= 2
+      ? (options.fw && /^12\./.test(options.fw) ? options.args[1] : options.args[0])
+      : (options.args && options.args[0]) ||
+        (options.fw && /^12\./.test(options.fw)
+          ? 'ps5-linux-loader-12xx.elf' : 'ps5-linux-loader.elf');
+    assert.deepEqual(result.fetched, [expected], JSON.stringify(options));
     assert.deepEqual(result.calls.map(call => call.nr), [0x61, 0x62, 0x1dd, 4, 0x49, 6]);
   }
+
+  // If a combined page is missing the 12.xx resource, the hand-off falls back
+  // to the default loader instead of hanging; a dedicated page is not required.
+  const fw12Fallback = await run({ listening: true, fw: '12.60',
+    missing: ['ps5-linux-loader-12xx.elf'] });
+  assert.equal(fw12Fallback.summary.failed, 0);
+  assert.deepEqual(fw12Fallback.fetched,
+    ['ps5-linux-loader-12xx.elf', 'ps5-linux-loader.elf']);
+  assert.deepEqual(fw12Fallback.written, [...fw12Fallback.elfBytes]);
 
   // Short writes are retried until the whole ELF has been handed over.
   const short = await run({ listening: true, shortWrite: 113 });
