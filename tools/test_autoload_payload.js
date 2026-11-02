@@ -25,7 +25,7 @@ async function run(options = {}) {
   let connections = 0;
   let closed = 0;
   let unmapped = 0;
-  const expectedElf = (options.args && options.args[0]) || 'autoload.elf';
+  const expectedElf = (options.args && options.args[0]) || 'ps5-linux-loader.elf';
   const api = {
     // Payload 3: the exploit already ran, so krw is present unless we are
     // testing the case where it did not.
@@ -86,7 +86,7 @@ async function run(options = {}) {
   assert.equal(ok.unmapped, 1);
   assert.equal(ok.closed, 1);
   assert.equal(ok.connections, 1);
-  assert.deepEqual(ok.events, ['autoload.elf', 'map']);
+  assert.deepEqual(ok.events, ['ps5-linux-loader.elf', 'map']);
 
   // Custom named payload passed via payload args.
   const custom = await run({ args: ['ps5-unified-autoloader-v0.1.6-e7093cd.elf'] });

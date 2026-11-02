@@ -31,7 +31,9 @@ async function connect(api) {
 }
 
 async function loadElf(api) {
-  const candidates = ["ps5-linux-loader.elf", (api && Array.isArray(api.args) && api.args[0]) || "autoload.elf"];
+  const requested = (api && Array.isArray(api.args) && api.args[0]) || "ps5-linux-loader.elf";
+  const candidates = [requested, "ps5-linux-loader.elf"].filter(
+    (name, index, all) => name && all.indexOf(name) === index);
   let elfName = null;
   let response = null;
   for (let i = 0; i < candidates.length; i++) {
@@ -40,7 +42,7 @@ async function loadElf(api) {
       if (r.ok) { response = r; elfName = candidates[i]; break; }
     } catch (e) {}
   }
-  if (!response || !elfName) throw new Error("Could not load ps5-linux-loader.elf.");
+  if (!response || !elfName) throw new Error("Could not load " + requested + ".");
   const bytes = await response.arrayBuffer();
   const view = new DataView(bytes);
   if (bytes.byteLength < 0x1000 || view.getUint32(0, true) !== 0x464c457f)

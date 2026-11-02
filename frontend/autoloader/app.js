@@ -61,6 +61,8 @@
     if (/queue stopped:/.test(text)) {
       finished = true;
       if (error) update(percent, 'Stopped. See the log above.', 'error');
+      else if (/Linux loader was sent to the already-running ELF loader/.test(text))
+        update(100, 'Linux loader sent to the already-running ELF loader.', 'done');
       else if (/ELF loader is already accepting connections/.test(text))
         update(100, 'ELF loader already running. Nothing to do.', 'done');
       else update(percent, 'Stopped. See the log above.', 'stopped');
@@ -71,7 +73,9 @@
       return;
     }
     if (finished) return;
-    if (/Autoload: sent \d+ bytes/.test(text)) {
+    if (/ELF loader already running; sending/.test(text))
+      update(90, 'Sending Linux loader to the already-running ELF loader...');
+    else if (/Autoload: sent \d+ bytes/.test(text)) {
       sent = true;
       update(98, 'Finishing autoload...');
     } else if (/\[3\/3\].*autoload\.js/.test(text)) update(95, 'Loading autoload payload...');

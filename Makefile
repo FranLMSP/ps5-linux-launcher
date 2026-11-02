@@ -95,7 +95,7 @@ page: payload-deps
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
 	@for chain in $(CHAINS); do \
 	    echo "$(BUILDER) payloads/$$chain.js -> build/autoloader/$$chain.html"; \
-	    $(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/$$chain.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
+	    $(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) payloads/$$chain.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
 	        --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
 	        --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf \
 	        -o $(CURDIR)/build/autoloader/$$chain.html || exit 1; \
@@ -126,10 +126,10 @@ host: $(HOST_PAYLOAD) payload-deps assets/icon.ico
 	@mkdir -p build/host build/deps
 	cp ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || cp bin/ps5-linux-loader.elf build/deps/autoload.elf 2>/dev/null || true
 	$(PYTHON) tools/gen_version.py --page-config $(PAGE_CONFIG)
-	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/relapse.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
+	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) payloads/relapse.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
 	    --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
 	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf -o $(CURDIR)/$(HOST_RELAPSE)
-	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js payloads/poops.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
+	$(BUILDER) $(CURDIR)/payloads/elfldr-check.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) payloads/poops.js $(CURDIR)/payloads/autoload.js::$(AUTOLOAD_PAYLOAD_VIRTUAL) \
 	    --title "$(BUILD_TITLE)" $(PAGE_FLAGS) \
 	    --embed $(AUTOLOAD_PAYLOAD_VIRTUAL)=build/deps/autoload.elf -o $(CURDIR)/$(HOST_POOPS)
 	$(PYTHON) $(LOADER)/tools/build_host.py \
